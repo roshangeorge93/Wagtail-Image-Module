@@ -75,7 +75,7 @@ def add(request):
         }, {
             'file': request.FILES['files[]'],
         }, user=request.user)
-        import ipdb; ipdb.set_trace()
+
         if form.is_valid():
             # Save it
             image = form.save(commit=False)
