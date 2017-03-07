@@ -48,7 +48,6 @@ def add(request):
     current_folder = None
     folder_id = request.GET.get('folder')
     if folder_id:
-        print("folder id in url")
         try:
             current_folder = ImageFolder.objects.get(id=folder_id)
         except (ValueError, ImageFolder.DoesNotExist):
