@@ -195,8 +195,6 @@ class ImageFolder(models.Model):
         return self.title
 
 
-
-
 @python_2_unicode_compatible
 class AbstractImage(CollectionMember, index.Indexed, models.Model):
     folder = models.ForeignKey(ImageFolder, null=True, blank=True)  # Null value would be root image folder
