@@ -30,8 +30,16 @@ urlpatterns = [
     url(r'^chooser/upload/$', chooser.chooser_upload, name='chooser_upload'),
     url(r'^chooser/(\d+)/select_format/$', chooser.chooser_select_format, name='chooser_select_format'),
 
+    url(r'^custom-api/folders/$', folder_apis.list, name='list_api'),
+    url(r'^custom-api/folders/(\d+)/$', folder_apis.list, name='list_api'),
     url(r'^custom-api/folders/move/$', folder_apis.move, name='move_api'),
+    url(r'^custom-api/folders/add/$', folder_apis.add, name='add_folder_api'),
+    url(r'^custom-api/folders/(\d+)/add/$', folder_apis.add, name='add_folder_api'),
+    url(r'^custom-api/folders/(\d+)/edit/$', folder_apis.edit, name='edit_folder_api'),
     url(r'^custom-api/folders/(\d+)/delete/$', folder_apis.delete, name='delete_folder_api'),
 
+    url(r'^custom-api/images/add/$', image_apis.add, name='add_image_api'),
+    url(r'^custom-api/images/(\d+)/edit/$', image_apis.edit, name='edit_image_api'),
     url(r'^custom-api/images/(\d+)/delete/$', image_apis.delete, name='delete_image_api'),
+    url(r'^custom-api/images/search/$', image_apis.search, name='search_image_api'),
 ]
