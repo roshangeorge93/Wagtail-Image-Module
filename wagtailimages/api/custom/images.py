@@ -1,4 +1,3 @@
-import os
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.core.exceptions import ObjectDoesNotExist
@@ -6,55 +5,10 @@ from django.core.exceptions import ObjectDoesNotExist
 from wagtail.wagtailimages.models import get_folder_model
 from wagtail.wagtailimages.permissions import permission_policy
 from wagtail.wagtailimages import get_image_model
+from wagtail.wagtailsearch import index as search_index
 
 ImageFolder = get_folder_model()
 Image = get_image_model()
-
-
-@require_POST
-def move(request):
-    response = dict()
-
-    if not permission_policy.user_has_permission(request.user, 'change'):
-        response['message'] = "User does not have permission"
-        return JsonResponse(response, status=403)
-
-    image_id = request.POST.get('image_id')
-    folder_id = request.POST.get('folder_id')
-
-    if not image_id or not folder_id:
-        response['message'] = "Image or folder ID missing"
-        return JsonResponse(response, status=400)
-
-    try:
-        image = Image.objects.get(id=image_id)
-    except ObjectDoesNotExist:
-        response['message'] = "Invalid Image ID"
-        return JsonResponse(response, status=404)
-
-    try:
-        folder = ImageFolder.objects.get(id=folder_id)
-    except ObjectDoesNotExist:
-        response['message'] = "Invalid Folder ID"
-        return JsonResponse(response, status=404)
-
-
-    if not permission_policy.user_has_permission_for_instance(request.user, 'change', image):
-        response['message'] = "Sorry, you do not have permission to access this area."
-        return JsonResponse(response, status=403)
-
-    initial_path = image.file.path
-
-    image.folder = folder
-    # Change the path of the file
-    image.file.name = os.path.join(folder.path, image.filename)
-    image.save()
-
-    new_path = image.file.path
-    os.rename(initial_path, new_path)
-
-    response['message'] = "Success"
-    return JsonResponse(response)
 
 
 @require_POST
@@ -89,6 +43,26 @@ def add(request):
 
     image_dict = dict()
     image_dict
+    response['message'] = "Success"
+    return JsonResponse(response)
+
+
+@require_POST
+def delete(request, image_id):
+    response = dict()
+
+    if not permission_policy.user_has_permission(request.user, 'change'):
+        response['message'] = "User does not have permission"
+        return JsonResponse(response, status=403)
+
+    try:
+        image = Image.objects.get(id=image_id)
+    except ObjectDoesNotExist:
+        response['message'] = "Invalid ID"
+        return JsonResponse(response, status=404)
+
+    image.delete()
+
     response['message'] = "Success"
     return JsonResponse(response)
 
