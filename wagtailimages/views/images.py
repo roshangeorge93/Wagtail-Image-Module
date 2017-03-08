@@ -21,6 +21,7 @@ from wagtail.wagtailimages.models import get_folder_model
 from wagtail.wagtailimages.models import Filter
 from wagtail.wagtailimages.permissions import permission_policy
 from wagtail.wagtailimages.views.serve import generate_signature
+from wagtail.wagtailimages.utils import get_folders_list, get_image_dict
 from wagtail.wagtailsearch import index as search_index
 
 permission_checker = PermissionPolicyChecker(permission_policy)
@@ -102,6 +103,31 @@ def index(request):
             'current_collection': current_collection,
             'user_can_add': permission_policy.user_has_permission(request.user, 'add'),
         })
+
+
+@vary_on_headers('X-Requested-With')
+def custom_index(request):
+
+    root_folder = dict()
+    root_folder['id'] = '-1'
+    root_folder['title'] = 'root'
+
+    # Get all folders under root
+    ImageFolder = get_folder_model()
+    folders = ImageFolder.objects.filter(folder__isnull=True)
+    folders_list = get_folders_list(folders)
+    root_folder['sub_folders'] = folders_list
+
+    # Get all images under root
+    Image = get_image_model()
+    images = Image.objects.filter(folder__isnull=True)
+    root_folder['images'] = list()
+    for image in images:
+        root_folder['images'].append(get_image_dict(image))
+
+    return render(request, 'wagtailimages/images/custom_index.html', {
+        'folders': [root_folder],
+    })
 
 
 @permission_checker.require('change')
