@@ -69,7 +69,7 @@ def move(request):
         response['message'] = "Image or folder ID missing"
         return JsonResponse(response, status=400)
 
-    if target_id == -1:
+    if int(target_id) == -1:
         target_folder = None   # Root folder
         target_absolute_path = os.path.join(settings.MEDIA_ROOT, IMAGES_FOLDER_NAME)
         target_relative_path = IMAGES_FOLDER_NAME
@@ -122,8 +122,7 @@ def move(request):
         image.file.name = os.path.join(target_relative_path, complete_file_name)
         image.save()
         search_index.insert_or_update_object(image)
-        response['new_source_name'] = image.title
-
+        response['data'] = get_image_dict(image)
     elif source_type == 'folder':
         try:
             source_folder = ImageFolder.objects.get(id=source_id)
@@ -147,7 +146,7 @@ def move(request):
                     new_folder = create_db_entries(source_folder.title, request.user, target_folder)
                     folders_list = get_folders_list([new_folder])
                     response['message'] = "Operation Failed! Found new entry in the OS. Loading the folder..."
-                    response['new_folder'] = folders_list[0]
+                    response['data'] = folders_list[0]
                     # Return a 202 as the intended action was not completed
                     return JsonResponse(response, status=202)
             else:
@@ -158,11 +157,11 @@ def move(request):
                     response['message'] = "Success"
                 break
         source_folder.save()
-        response['new_source_name'] = source_folder.title
-        return JsonResponse(response)
+        response['data'] = get_folders_list([source_folder])[0]
     else:
         response['message'] = "Invalid source type"
         return JsonResponse(response, status=400)
+    return JsonResponse(response)
 
 
 
@@ -205,6 +204,7 @@ def add(request, parent_id=None):
             folders_list = get_folders_list([folder])
             response['message'] = "Found new entry in the OS! Loading the folder..."
             response['data'] = folders_list[0]
+            return JsonResponse(response, status=202)
         else:
             response['message'] = "Folder already exists"
             return JsonResponse(response, status=403)
@@ -213,8 +213,7 @@ def add(request, parent_id=None):
         folder.save()
         response['message'] = "Success"
         response['data'] = get_folders_list([folder])[0]
-
-    return JsonResponse(response)
+        return JsonResponse(response)
 
 
 @require_POST
@@ -271,6 +270,7 @@ def edit(request, folder_id):
                 response['message'] = "Success"
             break
 
+    folder.save()
     response['data'] = get_folders_list([folder])[0]
     return JsonResponse(response)
 

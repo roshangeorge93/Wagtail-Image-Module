@@ -1,3 +1,4 @@
+import os
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.core.exceptions import ObjectDoesNotExist
@@ -8,6 +9,7 @@ from wagtail.wagtailimages import get_image_model
 from wagtail.wagtailsearch import index as search_index
 from wagtail.wagtailimages.utils import get_image_dict
 from wagtail.wagtailimages.forms import get_image_form
+from wagtail.wagtailimages.fields import ALLOWED_EXTENSIONS
 
 ImageFolder = get_folder_model()
 Image = get_image_model()
@@ -22,13 +24,21 @@ def add(request):
         response['message'] = "User does not have permission"
         return JsonResponse(response, status=403)
 
-    title = request.POST.get('title')
     file = request.FILES.get('files[]')
+    title = os.path.splitext(file.name)[0]
 
     if not title or not file:
         response['message'] = "Title or file missing"
         return JsonResponse(response, status=400)
 
+    extension = os.path.splitext(file.name)[1]
+    extension = extension[1:]   # Remove the '.' from the extension
+
+    if extension not in ALLOWED_EXTENSIONS:
+        response['message'] = "Invalid file type"
+        return JsonResponse(response, status=400)
+
+    folder = None
     folder_id = request.POST.get('folder_id')
     if folder_id:
         try:
@@ -85,6 +95,7 @@ def edit(request, image_id):
         image.save()
         search_index.insert_or_update_object(image)
         response['message'] = "Success"
+        response['data'] = get_image_dict(image)
         return JsonResponse(response)
     else:
         response['message'] = "Title not passed"
