@@ -1,9 +1,11 @@
 import os
+
+from django.conf import settings
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 
-from wagtail.wagtailimages.models import get_folder_model
+from wagtail.wagtailimages.models import get_folder_model, IMAGES_FOLDER_NAME
 from wagtail.wagtailimages.permissions import permission_policy
 from wagtail.wagtailimages.utils import (
     get_folders_list,
@@ -67,11 +69,19 @@ def move(request):
         response['message'] = "Image or folder ID missing"
         return JsonResponse(response, status=400)
 
-    try:
-        target_folder = ImageFolder.objects.get(id=target_id)
-    except ObjectDoesNotExist:
-        response['message'] = "Invalid target ID"
-        return JsonResponse(response, status=404)
+    if target_id == -1:
+        target_folder = None   # Root folder
+        target_absolute_path = os.path.join(settings.MEDIA_ROOT, IMAGES_FOLDER_NAME)
+        target_relative_path = IMAGES_FOLDER_NAME
+    else:
+        try:
+            target_folder = ImageFolder.objects.get(id=target_id)
+        except ObjectDoesNotExist:
+            response['message'] = "Invalid target ID"
+            return JsonResponse(response, status=404)
+        else:
+            target_absolute_path = target_folder.get_complete_path()
+            target_relative_path = target_folder.path
 
     if source_type == 'image':
         try:
@@ -90,24 +100,26 @@ def move(request):
         complete_file_name = image.filename
         file_name = os.path.splitext(image.filename)[0]     # get the filename
         extension = os.path.splitext(image.filename)[1]     # get the extension
-        new_path = os.path.join(target_folder.path, complete_file_name)
+        new_path = os.path.join(target_absolute_path, complete_file_name)
         while True:
             # Keeping renaming until there are no more filename clashes
             if os.path.exists(new_path):
                 count += 1
                 complete_file_name = file_name + str(count) + extension
-                new_path = os.path.join(target_folder.path, complete_file_name)
+                new_path = os.path.join(target_absolute_path, complete_file_name)
             else:
                 os.rename(initial_path, new_path)
                 if count:
-                    # If there were attempts made to resolve conflict
+                    # If there were attempts made to resolve conflict,
+                    # change the image's title
+                    # Append the count to the title
                     image.title = image.title + str(count)
                     response['message'] = "File with the same name exists! Renaming to avoid conflict."
                 else:
                     response['message'] = "Success"
                 break
 
-        image.file.name = os.path.join(target_folder.path, complete_file_name)
+        image.file.name = os.path.join(target_relative_path, complete_file_name)
         image.save()
         search_index.insert_or_update_object(image)
         response['new_source_name'] = image.title
