@@ -123,7 +123,13 @@ def move(request):
         image.save()
         search_index.insert_or_update_object(image)
         response['data'] = get_image_dict(image)
+
     elif source_type == 'folder':
+
+        if source_id == target_id:
+            response['message'] = "Source and target forlder ID cannot be the same."
+            return JsonResponse(response, status=400)
+
         try:
             source_folder = ImageFolder.objects.get(id=source_id)
         except ObjectDoesNotExist:
@@ -180,7 +186,7 @@ def add(request, parent_id=None):
         return JsonResponse(response, status=400)
 
     parent_folder = None
-    if parent_id:
+    if parent_id and int(parent_id) != -1:
         try:
             parent_folder = ImageFolder.objects.get(id=parent_id)
         except ObjectDoesNotExist:

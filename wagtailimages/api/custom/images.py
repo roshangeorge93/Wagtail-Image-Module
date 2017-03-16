@@ -40,7 +40,7 @@ def add(request):
 
     folder = None
     folder_id = request.POST.get('folder_id')
-    if folder_id:
+    if folder_id and int(folder_id) != -1:
         try:
             folder = ImageFolder.objects.get(id=folder_id)
         except ObjectDoesNotExist:
