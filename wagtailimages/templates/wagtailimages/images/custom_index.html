@@ -1,0 +1,96 @@
+{% extends "wagtailadmin/base.html" %}
+{% load staticfiles i18n wagtailimages_tags %}
+
+{% block extra_css %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'wagtailimages/css/folder-structure.css' %}" type="text/css">
+{% endblock %}
+
+{% block extra_js %}
+    {{ block.super }}
+    <script>
+        var folders = {{ folders|safe }};
+    </script>
+    <script src="{% static 'wagtailimages/js/folder-structure.js' %}"></script>
+    <script src="{% static 'wagtailimages/js/dragdrop.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+
+    {% trans "Images" as im_str %}
+
+    {% include "wagtailimages/images/header.html" with title=im_str icon="image" %}
+
+    <div id="mainCntr">
+        <div id="appHolder"></div>
+        <div id="searchResultsHolder"></div>
+        <script type="text/template" id="folderstructure">
+            <div data-content-id="<<id>>" class="draggable droppable contentID">
+                <div>
+                    <span class="folder"></span>
+                    <span class="folderName">
+                        <input type="text" class="editableInput" readonly="readonly" value="<<name>>" title="<<name>>"/>
+                    </span>
+                </div>
+            </div>
+        </script>
+        <script type="text/template" id="imageSearchView">
+            <div class="img">
+                <a href="/cms/images/<<id>>">
+                    <img class="file" src="<<fileUrl>>"/>
+                    <span class="fileName">
+                        <div><<name>></div>
+                    </span>
+                </a>
+            </div>
+        </script>
+        <script type="text/template" id="filestructure">
+            <div data-content-id="<<id>>" class="draggable img contentID">
+                <div>
+                    <img class="file" src="<<fileUrl>>"/>
+                    <span class="fileName">
+                        <input type="text" class="editableInput" readonly="readonly" value="<<name>>" title="<<name>>"/>
+                    </span>
+                </div>
+            </div>
+        </script>
+        <script type="text/template" id="imgpreviewstructure">
+            <div class="entity-wrapper imgPreview">
+                <img src="<<fileUrl>>"/>
+                <div><<name>></div>
+                <div>
+                    <a href="/cms/images/<<id>>">Edit</a>
+                </div>
+            </div>
+        </script>
+        <div class="custom_contextmenu">
+            <div data-hide="wrapper"><a data-action="rename" href="javascript:void(0)">Rename</a></div>
+            <div data-hide="wrapper"><a data-action="delete" href="javascript:void(0)">Delete</a></div>
+            <div data-hide="file"><a data-action="newfolder" href="javascript:void(0)">New Folder</a></div>
+            <div data-hide="file">
+                <a data-action="newfile" href="javascript:void(0)">Upload File</a>
+                <input type="file" id="fileUpload" name="file" accept="*">
+            </div>
+        </div>
+        <div class="modalBg">
+            <div class="folder-modal">
+                <div class="folderTitle">Enter folder name</div>
+                <div class=""><input id="newfolderId" type="text" value=""/></div>
+                <div class="newFolderBtnContainer">
+                    <button id="newfolderBtn">Submit</button>
+                    <button id="cancelBtn">Cancel</button>
+                </div>
+            </div>
+        </div>
+        <div id="spinner" class="spinnerBg">
+            <div class="spinner">
+              <div class="rect1"></div>
+              <div class="rect2"></div>
+              <div class="rect3"></div>
+              <div class="rect4"></div>
+              <div class="rect5"></div>
+            </div>
+        </div>
+    </div>
+    
+{% endblock %}
